@@ -1,0 +1,4 @@
+telebot
+openai
+dotenv
+os
