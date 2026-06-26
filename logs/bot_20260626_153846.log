@@ -1,0 +1,20 @@
+2026-06-26 15:38:57 - codioum_bot - INFO - Bot initialized successfully.
+2026-06-26 15:38:57 - codioum_bot - INFO - Start handlers registered.
+2026-06-26 15:38:57 - codioum_bot - INFO - AI chat handlers registered.
+2026-06-26 15:38:57 - codioum_bot - INFO - Weather handlers registered.
+2026-06-26 15:38:57 - codioum_bot - INFO - Games handlers registered.
+2026-06-26 15:41:15 - codioum_bot - DEBUG - Processing chat for user 5884578838: start...
+2026-06-26 15:41:15 - codioum_bot - DEBUG - Processing AI request for user message: start...
+2026-06-26 15:41:20 - codioum_bot - DEBUG - User state reset for user 5884578838
+2026-06-26 15:41:31 - codioum_bot - DEBUG - User 5884578838 started bot.
+2026-06-26 15:41:33 - codioum_bot - DEBUG - AI response generated successfully.
+2026-06-26 15:41:33 - codioum_bot - DEBUG - History event added for user 5884578838: ai_chat
+2026-06-26 15:41:33 - codioum_bot - DEBUG - History event added for user 5884578838: ai_chat
+2026-06-26 15:41:33 - codioum_bot - DEBUG - History event added for user 5884578838: action
+2026-06-26 15:41:35 - codioum_bot - DEBUG - AI response sent to user 5884578838
+2026-06-26 15:41:38 - codioum_bot - DEBUG - User state reset for user 5884578838
+2026-06-26 15:41:39 - codioum_bot - DEBUG - User 5884578838 returned to main menu.
+2026-06-26 15:41:42 - codioum_bot - DEBUG - User 5884578838 mode set to: weather
+2026-06-26 15:41:42 - codioum_bot - DEBUG - User 5884578838 entered weather mode.
+2026-06-26 15:43:38 - codioum_bot - DEBUG - User state reset for user 5884578838
+2026-06-26 15:43:41 - codioum_bot - DEBUG - User 5884578838 returned to main menu.

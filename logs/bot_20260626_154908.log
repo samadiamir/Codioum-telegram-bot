@@ -1,0 +1,16 @@
+2026-06-26 15:49:17 - codioum_bot - INFO - Bot initialized successfully.
+2026-06-26 15:49:17 - codioum_bot - INFO - Start handlers registered.
+2026-06-26 15:49:17 - codioum_bot - INFO - AI chat handlers registered.
+2026-06-26 15:49:17 - codioum_bot - INFO - Weather handlers registered.
+2026-06-26 15:49:17 - codioum_bot - INFO - Games handlers registered.
+2026-06-26 15:49:44 - codioum_bot - DEBUG - User state reset for user 5884578838
+2026-06-26 15:49:46 - codioum_bot - DEBUG - User 5884578838 returned to main menu.
+2026-06-26 15:49:48 - codioum_bot - DEBUG - User 5884578838 mode set to: weather
+2026-06-26 15:49:48 - codioum_bot - DEBUG - User 5884578838 entered weather mode.
+2026-06-26 15:50:26 - codioum_bot - DEBUG - Location message received from user 5884578838
+2026-06-26 15:50:26 - codioum_bot - ERROR - Error in weather_location_handler for user 5884578838: name 'get_user_mode' is not defined
+Traceback (most recent call last):
+  File "c:\Users\ASUS.PIESC\Downloads\codioum_bot\handlers\weather.py", line 31, in weather_location_handler
+    user_mode = get_user_mode(message.from_user.id)
+                ^^^^^^^^^^^^^
+NameError: name 'get_user_mode' is not defined. Did you mean: 'set_user_mode'?
