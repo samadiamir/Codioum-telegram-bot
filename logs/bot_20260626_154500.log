@@ -1,9 +1,0 @@
-2026-06-26 15:45:09 - codioum_bot - INFO - Bot initialized successfully.
-2026-06-26 15:45:09 - codioum_bot - INFO - Start handlers registered.
-2026-06-26 15:45:09 - codioum_bot - INFO - AI chat handlers registered.
-2026-06-26 15:45:09 - codioum_bot - INFO - Weather handlers registered.
-2026-06-26 15:45:09 - codioum_bot - INFO - Games handlers registered.
-2026-06-26 15:45:21 - codioum_bot - DEBUG - User state reset for user 5884578838
-2026-06-26 15:45:23 - codioum_bot - DEBUG - User 5884578838 started bot.
-2026-06-26 15:45:24 - codioum_bot - DEBUG - User 5884578838 mode set to: weather
-2026-06-26 15:45:25 - codioum_bot - DEBUG - User 5884578838 entered weather mode.
