@@ -5,21 +5,9 @@ and other bot actions.
 """
 
 from datetime import datetime
+from utils.database import get_connection
 from utils.logger import log_error, log_debug, log_warning
 
-user_history = {}
-
-
-def _ensure_history(user_id):
-    """Ensure user history exists in the dictionary."""
-    try:
-        if not user_id or not isinstance(user_id, int):
-            raise ValueError(f"Invalid user_id: {user_id}")
-
-        if user_id not in user_history:
-            user_history[user_id] = []
-    except Exception as e:
-        log_error(f"Error ensuring history for user {user_id}", e)
 
 
 def get_user_history(user_id, event_types=None):
@@ -34,21 +22,23 @@ def get_user_history(user_id, event_types=None):
         list: List of history event dictionaries
     """
     try:
-        _ensure_history(user_id)
-        if event_types is None:
-            return user_history[user_id]
-
-        if isinstance(event_types, str):
-            event_types = [event_types]
-
-        filtered = [event for event in user_history[user_id] if event.get("type") in event_types]
-        return filtered
+        conn = get_connection()
+        cursor = conn.cursor()
+        if not event_types:
+            cursor.execute("SELECT user_id, event_type, role, content, timestamp FROM messages WHERE user_id = ?", (user_id,))
+        else:
+            cursor.execute("SELECT user_id, event_type, role, content, timestamp FROM messages WHERE user_id = ? AND event_type = ?", (user_id, event_types,))
+        results = cursor.fetchall()
+        conn.close()
+        
+        return results
+            
     except Exception as e:
         log_error(f"Error getting history for user {user_id}", e)
         return []
 
 
-def add_history_event(user_id, event_type, content, metadata=None):
+def add_history_event(user_id, event_type, content, role=None, metadata=None, session_id=None):
     """
     Add a generic history event for a user.
 
@@ -59,32 +49,28 @@ def add_history_event(user_id, event_type, content, metadata=None):
         metadata (dict|None): Optional extra data
     """
     try:
-        if not event_type or not isinstance(event_type, str):
-            raise ValueError(f"Invalid event_type: {event_type}")
 
-        if not content or not isinstance(content, str):
-            raise ValueError(f"Invalid content: {content}")
-
-        _ensure_history(user_id)
         event = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "type": event_type,
             "content": content,
+            "session_id": session_id
         }
-        if metadata is not None:
-            if not isinstance(metadata, dict):
-                raise ValueError(f"Invalid metadata: {metadata}")
-            event["metadata"] = metadata
-
-        user_history[user_id].append(event)
-        log_debug(f"History event added for user {user_id}: {event_type}")
+        
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO messages (user_id, role, content, event_type, timestamp, session_id) 
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (user_id, role, content, event_type, datetime.utcnow().isoformat() + "Z", session_id))
+        conn.commit()
+        conn.close()
         return event
     except Exception as e:
         log_error(f"Error adding history event for user {user_id}", e)
         return None
 
-
-def add_message_to_history(user_id, role, content):
+def add_message_to_history(user_id, role, content, session_id=None):
     """
     Add an AI chat message to user history.
 
@@ -100,7 +86,7 @@ def add_message_to_history(user_id, role, content):
         if role not in ["user", "assistant"]:
             log_warning(f"Unexpected role value: {role}")
 
-        return add_history_event(user_id, "ai_chat", content, {"role": role})
+        return add_history_event(user_id, "ai_chat", content, role, session_id=session_id)
     except Exception as e:
         log_error(f"Error adding message to history for user {user_id}", e)
         return None
@@ -125,10 +111,8 @@ def add_location_to_history(user_id, latitude, longitude, description=None):
             user_id,
             "location",
             content,
-            {
-                "latitude": latitude,
-                "longitude": longitude,
-            }
+            role=None,
+            metadata= {"latitude": latitude, "longitude": longitude,}
         )
     except Exception as e:
         log_error(f"Error adding location to history for user {user_id}", e)
@@ -144,53 +128,19 @@ def clear_user_history(user_id, event_types=None):
         event_types (list|str|None): Optional event type filter. Clears all history if None.
     """
     try:
-        if user_id not in user_history:
-            return
-
-        if event_types is None:
-            user_history[user_id] = []
-            log_debug(f"All history cleared for user {user_id}")
-            return
-
-        if isinstance(event_types, str):
-            event_types = [event_types]
-
-        old_count = len(user_history[user_id])
-        user_history[user_id] = [
-            event for event in user_history[user_id]
-            if event.get("type") not in event_types
-        ]
-        new_count = len(user_history[user_id])
-        log_debug(f"History cleared for user {user_id}: removed {old_count - new_count} events")
+        
+        conn = get_connection()
+        cursor = conn.cursor()
+        if not event_types:
+            cursor.execute("DELETE FROM messages WHERE user_id = ?", (user_id,))
+        else :
+            cursor.execute("DELETE FROM messages WHERE user_id = ? AND event_type = ?", (user_id, event_types,))
+            
+        conn.commit()
+        conn.close()
+        
+        log_debug(f"History cleared for user {user_id}: removed {event_types} events")
+        
     except Exception as e:
         log_error(f"Error clearing history for user {user_id}", e)
 
-
-def get_full_history(user_id):
-    """
-    Get AI chat history formatted for the AI API request.
-
-    Args:
-        user_id (int): The user's Telegram ID
-
-    Returns:
-        list: List of role/content message dictionaries
-    """
-    try:
-        ai_events = get_user_history(user_id, event_types="ai_chat")
-        history = []
-        for event in ai_events:
-            try:
-                if event.get("metadata") and event["metadata"].get("role"):
-                    history.append({
-                        "role": event["metadata"]["role"],
-                        "content": event.get("content", "")
-                    })
-            except Exception as event_error:
-                log_warning(f"Error processing history event for user {user_id}", event_error)
-                continue
-
-        return history
-    except Exception as e:
-        log_error(f"Error getting full history for user {user_id}", e)
-        return []

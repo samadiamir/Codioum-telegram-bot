@@ -7,6 +7,7 @@ from utils.conversation_history import add_history_event, add_location_to_histor
 from utils.user_state import set_user_mode, save_user_location, get_user_location, get_user_mode
 from keyboards.menus import get_back_menu
 from utils.logger import log_error, log_debug, log_warning
+from utils.constants import Emojis, Messages, Buttons
 
 def register_weather_handler(bot):
     """
@@ -25,7 +26,7 @@ def register_weather_handler(bot):
 
             if not message.location:
                 log_warning(f"Location message received but location is None for user {message.from_user.id}")
-                bot.reply_to(message, "Please share your location to get the weather information.")
+                bot.reply_to(message, Messages.WARNING_EMPTY_MESSAGE)
                 return
 
             user_mode = get_user_mode(message.from_user.id)
@@ -43,7 +44,7 @@ def register_weather_handler(bot):
 
             if not isinstance(latitude, (int, float)) or not isinstance(longitude, (int, float)):
                 log_warning(f"Invalid location coordinates: {latitude}, {longitude}")
-                bot.reply_to(message, "Invalid location coordinates received.")
+                bot.reply_to(message, Messages.ERROR_INVALID_INPUT)
                 return
 
             save_user_location(message.from_user.id, latitude, longitude)
@@ -70,26 +71,26 @@ def register_weather_handler(bot):
         except Exception as e:
             log_error(f"Error in weather_location_handler for user {message.from_user.id}", e)
             try:
-                bot.reply_to(message, "Error retrieving weather. Please try again.")
+                bot.reply_to(message, Messages.WEATHER_ERROR)
             except Exception as send_error:
                 log_error("Failed to send error message", send_error)
 
-    @bot.message_handler(func=lambda message: getattr(message, 'text', None) == "🌤️ Weather" or getattr(message, 'text', None) == "/weather")
+    @bot.message_handler(func=lambda message: getattr(message, 'text', None) == Buttons.WEATHER or getattr(message, 'text', None) == "/weather")
     def weather_chat_button(message):
         """Handle Weather button click"""
         try:
             set_user_mode(message.from_user.id, "weather")
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add(types.KeyboardButton("📍 Share My Location", request_location=True))
+            markup.add(types.KeyboardButton(Buttons.SHARE_LOCATION, request_location=True))
 
             saved_location = get_user_location(message.from_user.id)
             if saved_location:
-                markup.add(types.KeyboardButton("Use saved location"))
-            markup.add(types.KeyboardButton("⬅️ Back"))
+                markup.add(types.KeyboardButton(Buttons.USE_SAVED_LOCATION))
+            markup.add(types.KeyboardButton(Buttons.BACK))
 
             bot.send_message(
                 message.chat.id,
-                "🌤️ Weather mode activated! Send me a city name, share your location, or use your saved location.",
+                Messages.WEATHER_MODE,
                 reply_markup=markup
             )
             log_debug(f"User {message.from_user.id} entered weather mode.")
@@ -98,12 +99,12 @@ def register_weather_handler(bot):
             try:
                 bot.send_message(
                     message.chat.id,
-                    "Sorry, there was an error. Please try again."
+                    Messages.ERROR_GENERAL
                 )
             except Exception as send_error:
                 log_error("Failed to send error message", send_error)
 
-    @bot.message_handler(func=lambda message: getattr(message, 'text', None) and get_user_location(message.from_user.id) and get_user_mode(message.from_user.id) == "weather" and getattr(message, 'text', None).strip().lower() == "use saved location")
+    @bot.message_handler(func=lambda message: getattr(message, 'text', None) and get_user_location(message.from_user.id) and get_user_mode(message.from_user.id) == "weather" and getattr(message, 'text', None).strip().lower() == Buttons.USE_SAVED_LOCATION.lower())
     def weather_saved_location_handler(message):
         """Handle the saved location weather request"""
         try:
@@ -120,7 +121,7 @@ def register_weather_handler(bot):
             else:
                 bot.send_message(
                     message.chat.id,
-                    "No saved location found. Please share your location first.",
+                    Messages.ERROR_NOT_FOUND,
                     reply_markup=get_back_menu()
                 )
         except Exception as e:
@@ -128,7 +129,7 @@ def register_weather_handler(bot):
             try:
                 bot.send_message(
                     message.chat.id,
-                    "Error retrieving weather. Please try again."
+                    Messages.WEATHER_ERROR
                 )
             except Exception as send_error:
                 log_error("Failed to send error message", send_error)
@@ -141,7 +142,7 @@ def register_weather_handler(bot):
             if not city:
                 bot.send_message(
                     message.chat.id,
-                    "Please enter a city name or share your location.",
+                    Messages.WARNING_EMPTY_MESSAGE,
                     reply_markup=get_back_menu()
                 )
                 return
@@ -159,7 +160,7 @@ def register_weather_handler(bot):
             try:
                 bot.send_message(
                     message.chat.id,
-                    "Error retrieving weather. Please try again."
+                    Messages.WEATHER_ERROR
                 )
             except Exception as send_error:
                 log_error("Failed to send error message", send_error)

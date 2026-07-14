@@ -1,14 +1,14 @@
 from openai import OpenAI
-from config.settings import GAP_API, AI_MODEL, AI_BASE_URL
+from config.settings import AI_MODEL, AI_BASE_URL, AI_KEY
 from utils.logger import log_error, log_warning, log_debug
 
-if not GAP_API or not AI_MODEL or not AI_BASE_URL:
-    log_error("AI configuration is incomplete. Check GAP_API, AI_MODEL, and AI_BASE_URL in settings.")
+if not AI_KEY or not AI_MODEL or not AI_BASE_URL:
+    log_error("AI configuration is incomplete. Check AI_KEY, AI_MODEL, and AI_BASE_URL in settings.")
 
-client = OpenAI(base_url=AI_BASE_URL, api_key=GAP_API)
+client = OpenAI(base_url=AI_BASE_URL, api_key=AI_KEY)
 
 
-def get_ai_response(user_message, conversation_history=None):
+def get_ai_response(user_message, conversation_history=None, system_context=None):
     """
     Get response from AI model with error handling and conversation history.
 
@@ -33,12 +33,12 @@ def get_ai_response(user_message, conversation_history=None):
             messages = []
 
         messages.append({"role": "user", "content": user_message})
+        if system_context:
+            messages.insert(0, {"role": "system", "content": system_context})
 
         response = client.chat.completions.create(
             model=AI_MODEL,
             messages=messages,
-            max_tokens=1000,
-            temperature=0.7
         )
 
         if not response or not response.choices:
@@ -46,20 +46,22 @@ def get_ai_response(user_message, conversation_history=None):
             return None
 
         ai_response = response.choices[0].message.content
-        log_debug(f"AI response generated successfully.")
+        log_debug("AI response generated successfully.")
         return ai_response
 
     except AttributeError as e:
         log_error("Attribute error in AI service (likely invalid config)", e)
         return None
     except Exception as e:
-        log_error(f"AI API Error on first attempt", e)
+        log_error("AI API Error on first attempt", e)
 
         # Retry once on error
         try:
             log_debug("Retrying AI request...")
             messages = conversation_history if conversation_history else []
             messages.append({"role": "user", "content": user_message})
+            if system_context:
+                messages.insert(0, {"role": "system", "content": system_context})
 
             response = client.chat.completions.create(
                 model=AI_MODEL,

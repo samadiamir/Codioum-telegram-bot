@@ -6,12 +6,17 @@ load_dotenv()
 # Telegram Bot Configuration
 API_TOKEN = os.environ.get("API_KEY")
 
-# AI Configuration
-AI_KEY = os.environ.get("AI_KEY")
-GAP_API = os.environ.get("GAP_API")
-AI_MODEL = "qwen3-235b-a22b"
-AI_BASE_URL = "https://api.gapgpt.app/v1"
+# API for create questions
+TRIVIA_URL = "https://opentdb.com/api.php?amount=10&type=boolean"
 
+# AI Configuration
+AI_KEY = os.environ.get("NARA_KEY")
+AI_MODEL = "mistral-large"
+# mistral-large
+# "mimo-v2.5-pro-free"
+AI_BASE_URL = "https://router.bynara.id/v1"
+# https://api.gapgpt.app/v1
+# https://router.bynara.id/v1
 # Support Contacts
 SUPPORT_EMAIL = "Samadi.amirmohammad97@gmail.com"
 SUPPORT_ID = "@GraceA_Ls"

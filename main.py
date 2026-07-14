@@ -1,20 +1,16 @@
-from dotenv import load_dotenv
-import os
 import sys
 import time
 from pathlib import Path
 import telebot
+from utils.database import init_db
 
 ROOT_DIR = Path(__file__).resolve().parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from handlers import start, ai_chat, weather, games
+from config.settings import API_TOKEN
+from handlers import start, ai_chat, weather, games, sessions
 from utils.logger import log_info, log_error, log_warning
-
-load_dotenv()
-
-API_TOKEN = os.environ.get("API_KEY")
 
 if not API_TOKEN:
     log_error("API_KEY environment variable is not set!")
@@ -26,6 +22,9 @@ try:
 except Exception as e:
     log_error("Failed to initialize bot", e)
     raise
+
+init_db()
+log_info("Database initialized.")
 
 try:
     # Register handlers
@@ -40,6 +39,9 @@ try:
 
     games.register_games_handler(bot)
     log_info("Games handlers registered.")
+
+    sessions.register_session_handlers(bot)
+    log_info("Sessions handlers registered.")
 except Exception as e:
     log_error("Failed to register handlers", e)
     raise

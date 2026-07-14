@@ -9,6 +9,71 @@ from utils.logger import log_error, log_warning, log_debug
 WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
 GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 
+WEATHER_DESCRIPTION = {
+    0: "☀️ Clear sky",
+    1: "🌤️ Mainly clear",
+    2: "⛅ Partly cloudy",
+    3: "☁️ Overcast",
+    45: "🌫️ Fog",
+    48: "🌫️ Depositing rime fog",
+    51: "🌧️ Drizzle: Light",
+    53: "🌧️ Drizzle: Moderate",
+    55: "🌧️ Drizzle: Dense",
+    56: "🌧️ Freezing Drizzle: Light",
+    57: "🌧️ Freezing Drizzle: Dense",
+    61: "🌧️ Rain: Slight",
+    63: "🌧️ Rain: Moderate",
+    65: "🌧️ Rain: Heavy",
+    66: "🌧️ Freezing Rain: Light",
+    67: "🌧️ Freezing Rain: Heavy",
+    71: "🌨️ Snow fall: Slight",
+    73: "🌨️ Snow fall: Moderate",
+    75: "🌨️ Snow fall: Heavy",
+    77: "🌨️ Snow grains",
+    80: "🌧️ Rain showers: Slight",
+    81: "🌧️ Rain showers: Moderate",
+    82: "🌧️ Rain showers: Violent",
+    85: "🌨️ Snow showers: Slight",
+    86: "🌨️ Snow showers: Heavy",
+    95: "⛈️ Thunderstorm: Slight",
+    96: "⛈️ Thunderstorm with slight hail",
+    99: "⛈️ Thunderstorm with heavy hail",
+}
+
+TEMPERATURE_FEELING = {
+    "🥶 Freezing": (-50, -10),
+    "❄️ Cold": (-9, 5),
+    "😊 Cool": (6, 15),
+    "🌤️ Warm": (16, 25),
+    "🔥 Hot": (26, 40),
+    "🆘 Extreme heat": (41, 60),
+}
+
+
+def _get_temperature_feeling(temp):
+    """Convert temperature to a human-friendly feeling."""
+    for feeling, (low, high) in TEMPERATURE_FEELING.items():
+        if low <= temp <= high:
+            return feeling
+    return "🌡️ Unknown"
+
+
+def _get_uv_level(uv):
+    """Convert UV index to a human-readable level."""
+    try:
+        uv = float(uv)
+        if uv < 3:
+            return "Low"
+        elif uv < 6:
+            return "Moderate"
+        elif uv < 8:
+            return "High"
+        elif uv < 11:
+            return "Very High"
+        else:
+            return "Extreme"
+    except (ValueError, TypeError):
+        return "Unknown"
 
 def _format_weather(data, location_name=None):
     """Format weather data into a readable string."""
@@ -19,21 +84,37 @@ def _format_weather(data, location_name=None):
         current = data.get("current_weather", {})
         if not current:
             return "Weather data is unavailable."
-
+        code = current.get("weathercode")
         temperature = current.get("temperature")
-        windspeed = current.get("windspeed")
-        winddirection = current.get("winddirection")
-        weathercode = current.get("weathercode")
-        time = current.get("time")
+        weather = WEATHER_DESCRIPTION.get(code, "Unknown")
+        time = current.get("time", "")
+        time = time.split("T")[1] if "T" in time else time
+
+        # Get additional data from hourly (first hour = current)
+        hourly_data = data.get("hourly", {})
+
+        humidity_data = hourly_data.get("relativehumidity_2m")
+        humidity = humidity_data[0] if humidity_data else "N/A"
+
+        feels_like_data = hourly_data.get("apparent_temperature")
+        feels_like = feels_like_data[0] if feels_like_data else "N/A"
+
+        uv_index_data = hourly_data.get("uv_index")
+        uv_index = uv_index_data[0] if uv_index_data else "N/A"
+
+        # UV level description
+        uv_level = _get_uv_level(uv_index)
 
         location = location_name or f"{data.get('latitude')},{data.get('longitude')}"
+        feeling = _get_temperature_feeling(temperature)
         return (
-            f"Weather for {location}:\n"
-            f"Temperature: {temperature}°C\n"
-            f"Wind speed: {windspeed} km/h\n"
-            f"Wind direction: {winddirection}°\n"
-            f"Weather code: {weathercode}\n"
-            f"Observed at: {time}"
+            f"📍 {location}\n\n"
+            f"{weather}\n\n"
+            f"🌡️ Temperature: {temperature}°C ({feeling})\n"
+            f"🤔 Feels like: {feels_like}°C\n"
+            f"💧 Humidity: {humidity}%\n"
+            f"☀️ UV Index: {uv_index} ({uv_level})\n"
+            f"🕐 Updated: {time}"
         )
     except Exception as e:
         log_error("Error formatting weather data", e)
@@ -132,6 +213,7 @@ def get_weather(city=None, latitude=None, longitude=None):
             "latitude": latitude,
             "longitude": longitude,
             "current_weather": True,
+            "hourly": "relativehumidity_2m,apparent_temperature,uv_index",
             "temperature_unit": "celsius",
             "windspeed_unit": "kmh",
             "precipitation_unit": "mm",

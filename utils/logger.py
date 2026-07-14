@@ -11,8 +11,10 @@ from datetime import datetime
 logger = logging.getLogger("codioum_bot")
 logger.setLevel(logging.DEBUG)
 
-# Create console handler
-console_handler = logging.StreamHandler(sys.stdout)
+# Create console handler with UTF-8 encoding
+import io
+console_stream = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+console_handler = logging.StreamHandler(console_stream)
 console_handler.setLevel(logging.DEBUG)
 
 # Create file handler

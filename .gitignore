@@ -1,0 +1,21 @@
+# Environment & secrets
+.env
+
+# Database
+*.db
+bot_data.db
+
+# Logs
+logs/
+*.log
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+
+# Local Hermes working dir
+.hermes/

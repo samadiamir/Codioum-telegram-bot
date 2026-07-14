@@ -1,4 +1,0 @@
-telebot
-openai
-dotenv
-os
