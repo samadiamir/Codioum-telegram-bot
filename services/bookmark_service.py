@@ -16,8 +16,7 @@ def add_bookmark(user_id: int, content: str) :
 
     try:
         cursor = conn.cursor()
-        log_debug(f"{Emojis.Bs
-            OOK} Creating bookmark for user {user_id}")
+        log_debug(f"{Emojis.BOOK} Creating bookmark for user {user_id}")
 
         cursor.execute("""
             INSERT INTO bookmarks(user_id, content, saved_at)
@@ -27,7 +26,7 @@ def add_bookmark(user_id: int, content: str) :
         conn.commit()
 
         bookmark_id = cursor.lastrowid
-        log_info(f"{Emojis.SUCCESS} Bookmark id saved successflly for user {user_id}")
+        log_info(f"{Emojis.SUCCESS} Bookmark id saved successfully for user {user_id}")
         return bookmark_id
         
     except Exception as add_bookmark_error:
